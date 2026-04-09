@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторна робота 1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f4f4f9;
+            color: #333;
+            padding: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border-top: 5px solid #4a90e2;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .info-list {
+            list-style: none;
+        }
+
+        .info-list li {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #2c3e50;
+            text-align: right;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #95a5a6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>CSDA2 - Лаб 1</h1>
+        <ul class="info-list">
+            <li>
+                <span class="label">Студент</span>
+                <span class="value">Богатов Ілля Сергійович</span>
+            </li>
+            <li>
+                <span class="label">Група</span>
+                <span class="value">КІ-408</span>
+            </li>
+            <li>
+                <span class="label">Варіант</span>
+                <span class="value">1</span>
+            </li>
+            <li>
+                <span class="label">Пристрій</span>
+                <span class="value">CY8CKIT-062-WIFI-BT</span>
+            </li>
+            <li>
+                <span class="label">Сховище</span>
+                <span class="value">LittleFS</span>
+            </li>
+            <li>
+                <span class="label">Статус</span>
+                <span style="color: #27ae60;" class="value">● Online</span>
+            </li>
+        </ul>
+        <div class="footer">
+            Вбудований вебсервер
+        </div>
+    </div>
+</body>
+
+</html>
