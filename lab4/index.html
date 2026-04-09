@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSoC6 — Налаштування Wi-Fi (Captive Portal)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="card">
+        <!-- Icon -->
+        <div class="icon">📡</div>
+
+        <!-- Header -->
+        <h1>CSDA2 — Лаб 4</h1>
+        <p class="subtitle">Богатов Ілля Сергійович · КІ-408 · Варіант 1</p>
+
+        <!-- Status Badge -->
+        <div style="text-align:center">
+            <span class="status-badge">
+                <span class="dot"></span>
+                Режим Captive Portal
+            </span>
+        </div>
+
+        <!-- Info -->
+        <div class="info-section">
+            <div class="info-row">
+                <span>Режим</span>
+                <span>SoftAP (Access Point)</span>
+            </div>
+            <div class="info-row">
+                <span>Мережа</span>
+                <span>PSoC6_Setup</span>
+            </div>
+            <div class="info-row">
+                <span>IP шлюзу</span>
+                <span>192.168.1.1</span>
+            </div>
+            <div class="info-row">
+                <span>DNS Redirect</span>
+                <span>UDP :53 → 192.168.1.1</span>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form action="/save" method="POST" id="configForm">
+            <!-- Hidden field for SSID -->
+            <input type="hidden" id="ssidHidden" name="ssid" value="">
+
+            <!-- Label + Scan button -->
+            <div class="row-between">
+                <label style="margin-bottom:0" for="networkList">Доступні мережі Wi-Fi:</label>
+                <button type="button" class="btn-scan" id="btnScan" onclick="simulateScan()">
+                    <span class="scan-icon">🔄</span>
+                    <span class="spinner"></span>
+                    Сканувати
+                </button>
+            </div>
+
+            <!-- Network list -->
+            <div class="network-list-wrap" id="networkListWrap">
+                <div class="network-list" id="networkList"></div>
+            </div>
+
+            <!-- Manual toggle -->
+            <div class="manual-toggle" id="manualToggle" onclick="toggleManualInput()">
+                ✏️ Ввести SSID вручну
+            </div>
+
+            <!-- Manual SSID input -->
+            <div class="manual-input-wrap" id="manualInputWrap">
+                <input type="text" id="manualSsid" placeholder="Назва мережі (SSID)"
+                    oninput="document.getElementById('ssidHidden').value = this.value">
+            </div>
+
+            <!-- Password -->
+            <label for="password">Пароль мережі:</label>
+            <div class="password-wrap">
+                <input type="password" id="password" name="password" placeholder="Введіть пароль Wi-Fi">
+                <button type="button" class="toggle-pass" onclick="togglePassword()">👁</button>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-submit" id="btnSubmit">
+                🔗 Зберегти та перезавантажити
+            </button>
+        </form>
+
+        <!-- Note -->
+        <p class="note">
+            Після збереження пристрій перезавантажиться й автоматично<br>
+            підключиться до обраної мережі Wi-Fi.
+        </p>
+    </div>
+
+    <script>
+        /* ─── State ─── */
+        let selectedSSID = '';
+
+        /* ─── Demo networks (replaced by MCU scan in production) ─── */
+        const demoNetworks = [
+            { ssid: 'HomeNetwork_5G', rssi: -42, security: 'WPA2' },
+            { ssid: 'TP-Link_Office', rssi: -55, security: 'WPA2' },
+            { ssid: 'IoT_Lab_AP', rssi: -60, security: 'WPA2' },
+            { ssid: 'FreeWiFi_Campus', rssi: -68, security: 'Open' },
+            { ssid: 'Kyivstar_Guest', rssi: -73, security: 'WPA2' },
+            { ssid: 'Vodafone_HotSpot', rssi: -78, security: 'WPA2' },
+        ];
+
+        /* ─── Render network list ─── */
+        function renderNetworks(networks) {
+            const list = document.getElementById('networkList');
+            list.innerHTML = '';
+            networks.sort((a, b) => b.rssi - a.rssi);
+
+            networks.forEach(net => {
+                const item = document.createElement('div');
+                item.className = 'network-item';
+                item.onclick = () => selectNetwork(net.ssid, item);
+
+                let bars = 1;
+                if (net.rssi > -50) bars = 4;
+                else if (net.rssi > -60) bars = 3;
+                else if (net.rssi > -70) bars = 2;
+
+                item.innerHTML = `
+                    <span class="network-name">${net.ssid}</span>
+                    <span class="network-meta">
+                        <span class="lock-icon">${net.security !== 'Open' ? '🔒' : '🔓'}</span>
+                        <span>${net.rssi} dBm</span>
+                        <span class="signal-bars">
+                            <span class="bar ${bars >= 1 ? 'active' : ''}"></span>
+                            <span class="bar ${bars >= 2 ? 'active' : ''}"></span>
+                            <span class="bar ${bars >= 3 ? 'active' : ''}"></span>
+                            <span class="bar ${bars >= 4 ? 'active' : ''}"></span>
+                        </span>
+                    </span>`;
+                list.appendChild(item);
+            });
+        }
+
+        /* ─── Select a network ─── */
+        function selectNetwork(ssid, element) {
+            selectedSSID = ssid;
+            document.getElementById('ssidHidden').value = ssid;
+            document.querySelectorAll('.network-item').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('manualInputWrap').classList.remove('active');
+            document.getElementById('networkListWrap').classList.remove('hidden');
+            document.getElementById('manualToggle').textContent = '✏️ Ввести SSID вручну';
+            document.getElementById('password').focus();
+        }
+
+        /* ─── Simulate scan ─── */
+        function simulateScan() {
+            const btn = document.getElementById('btnScan');
+            btn.classList.add('loading');
+            setTimeout(() => {
+                renderNetworks(demoNetworks);
+                btn.classList.remove('loading');
+            }, 1200);
+        }
+
+        /* ─── Toggle manual SSID input ─── */
+        function toggleManualInput() {
+            const wrap = document.getElementById('manualInputWrap');
+            const listWrap = document.getElementById('networkListWrap');
+            const toggle = document.getElementById('manualToggle');
+
+            if (wrap.classList.contains('active')) {
+                wrap.classList.remove('active');
+                listWrap.classList.remove('hidden');
+                toggle.textContent = '✏️ Ввести SSID вручну';
+            } else {
+                wrap.classList.add('active');
+                listWrap.classList.add('hidden');
+                toggle.textContent = '📋 Показати список мереж';
+                document.getElementById('manualSsid').focus();
+            }
+        }
+
+        /* ─── Toggle password visibility ─── */
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const btn = input.nextElementSibling;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🔒';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁';
+            }
+        }
+
+        /* ─── Form validation ─── */
+        document.getElementById('configForm').addEventListener('submit', function (e) {
+            const ssid = document.getElementById('ssidHidden').value.trim();
+            if (!ssid) {
+                e.preventDefault();
+                alert('Будь ласка, виберіть мережу або введіть SSID вручну.');
+                return;
+            }
+            const btn = document.getElementById('btnSubmit');
+            btn.textContent = '⏳ Збереження...';
+            btn.style.opacity = '0.7';
+            btn.style.pointerEvents = 'none';
+        });
+
+        /* ─── Initial scan ─── */
+        window.addEventListener('DOMContentLoaded', () => simulateScan());
+    </script>
+</body>
+
+</html>
