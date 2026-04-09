@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Захищена панель (HTTPS)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="card">
+        <div class="icon">🔒</div>
+        <h1>PSoC 6 — Secure Control</h1>
+        <p class="subtitle">Богатов Ілля Сергійович · КІ-408 · Варіант 1</p>
+
+        <div class="status-badge">
+            <span class="dot"></span>
+            З'єднання захищено (TLS)
+        </div>
+
+        <div class="info-section">
+            <div class="info-row">
+                <span>Протокол</span>
+                <span>HTTPS (mbedTLS)</span>
+            </div>
+            <div class="info-row">
+                <span>Автентифікація</span>
+                <span>Basic Auth (admin)</span>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-action" onclick="toggleLed()">
+                💡 Перемкнути LED (POST)
+            </button>
+        </div>
+
+        <p class="note" id="serverMsg">Очікування команд...</p>
+    </div>
+
+    <script>
+        function toggleLed() {
+            const btn = document.querySelector('.btn-action');
+            const msg = document.getElementById('serverMsg');
+            
+            btn.textContent = "Обробка...";
+            btn.style.opacity = '0.7';
+
+            fetch('/api/led', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                // Браузер автоматично додасть заголовок Authorization, оскільки ми вже ввійшли
+            })
+            .then(res => {
+                if(res.status === 401) {
+                    msg.textContent = "Помилка авторизації!";
+                    throw new Error("Unauthorized");
+                }
+                return res.json();
+            })
+            .then(data => {
+                msg.textContent = data.led ? "Світлодіод УВІМКНЕНО" : "Світлодіод ВИМКНЕНО";
+                msg.style.color = "#2563eb";
+            })
+            .catch(err => {
+                console.error(err);
+                if(msg.textContent !== "Помилка авторизації!") {
+                    msg.textContent = "Помилка з'єднання.";
+                    msg.style.color = "red";
+                }
+            })
+            .finally(() => {
+                btn.textContent = "💡 Перемкнути LED (POST)";
+                btn.style.opacity = '1';
+            });
+        }
+    </script>
+</body>
+</html>
